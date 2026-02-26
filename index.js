@@ -52,14 +52,12 @@ app.set('trust proxy', 1);
 app.use(session({
     secret: 'gdguSecretKey',
     resave: false,
-    saveUninitialized: false
-}));
-
-// Session MUST be before routes
-app.use(session({
-    secret: 'gdguSecretKey',
-    resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        secure: true,      // IMPORTANT for Railway (HTTPS)
+        httpOnly: true,
+        sameSite: 'none'   // IMPORTANT for production
+    }
 }));
 
 // Static folder
