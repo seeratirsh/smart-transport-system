@@ -7,6 +7,20 @@ const session = require('express-session');
 
 const connection = require('./config/db');
 
+const fs = require("fs");
+
+if (process.env.IMPORT_DB === "true") {
+  const sql = fs.readFileSync("transport_backup.sql", "utf8");
+
+  connection.query(sql, (err) => {
+    if (err) {
+      console.error("Import failed:", err);
+    } else {
+      console.log("Database imported successfully!");
+    }
+  });
+}
+
 // =======================
 // ROUTE IMPORTS
 // =======================
