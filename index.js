@@ -89,6 +89,35 @@ app.use('/trips', requireAdmin, tripRoutes);
 // =======================
 // START SERVER
 // =======================
+
+app.get("/setup-db", (req, res) => {
+  const queries = `
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100),
+      email VARCHAR(100),
+      password VARCHAR(255),
+      role VARCHAR(20)
+    );
+
+    INSERT INTO users (name, email, password, role)
+    VALUES 
+    ('Admin User', 'admin@gdgu.org', '123456', 'admin'),
+    ('Dr. Meera ', 'meera@gdgu.org', '123456', 'faculty'),
+    ('Ms. Falak', 'falak@gdgu.org', '123456', 'faculty'),
+    ('Mr. Ayush Sharma', 'ayush@gdgu.org', '123456', 'faculty');
+  `;
+
+  connection.query(queries, (err) => {
+    if (err) {
+      console.error(err);
+      return res.send("Error creating tables");
+    }
+    res.send("Database setup complete!");
+  });
+});
+
+
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
