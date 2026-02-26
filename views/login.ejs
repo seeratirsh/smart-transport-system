@@ -21,9 +21,19 @@
 
     <div class="login-card">
 
-        <h3 class="login-title">GDGU Transit</h3>
-        <p class="login-subtitle">Login to your account</p>
+        <!-- LOGIN HEADER -->
+        <div class="login-header-vertical">
+            <img src="/images/gdgoenkalogo.jpg"
+                 alt="GD Goenka Logo"
+                 class="login-logo-top">
 
+    
+                <h3 class="login-title mt-3">GDGU Transit</h3>
+                <p class="login-subtitle">Login to your account</p>
+            
+        </div>
+
+        <!-- LOGIN FORM -->
         <form action="/login" method="POST">
 
             <div class="mb-3">
@@ -42,7 +52,8 @@
                        required>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 login-btn">
+            <button type="submit"
+                    class="btn btn-primary w-100 login-btn">
                 Login
             </button>
 
