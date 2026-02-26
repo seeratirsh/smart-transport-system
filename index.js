@@ -142,16 +142,21 @@ app.get("/setup-db", (req, res) => {
   );
 
   -- TRIPS TABLE
-  CREATE TABLE trips (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    booking_id INT NOT NULL,
-    start_location VARCHAR(255),
-    end_location VARCHAR(255),
-    start_time DATETIME,
-    end_time DATETIME,
-    status VARCHAR(50) DEFAULT 'scheduled',
-    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
-  );
+  -- TRIPS TABLE
+    CREATE TABLE trips (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT NOT NULL,
+  driver_id INT NOT NULL,
+  vehicle_id INT NOT NULL,
+  start_location VARCHAR(255),
+  end_location VARCHAR(255),
+  start_time DATETIME,
+  end_time DATETIME,
+  status VARCHAR(50) DEFAULT 'active',
+  FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+  FOREIGN KEY (driver_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+);
 
   -- INSERT USERS
   INSERT INTO users (name, email, password, role) VALUES
