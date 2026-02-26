@@ -119,7 +119,7 @@ app.get("/setup-db", (req, res) => {
 
 
 app.get("/check-users", (req, res) => {
-  connection.query("SELECT id, name, email, role FROM users", (err, results) => {
+  connection.query("SELECT * FROM users", (err, results) => {
     if (err) {
       console.error(err);
       return res.send("Error fetching users");
