@@ -100,41 +100,93 @@ app.use('/trips', requireAdmin, tripRoutes);
 
 app.get("/setup-db", (req, res) => {
   const queries = `
-    CREATE TABLE IF NOT EXISTS users (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(100),
-      email VARCHAR(100),
-      password VARCHAR(255),
-      role VARCHAR(20)
-    );
 
-    INSERT INTO users (name, email, password, role)
-    VALUES 
-    ('Admin User', 'admin@gdgu.org', '123456', 'admin'),
-    ('Dr. Meera ', 'meera@gdgu.org', '123456', 'faculty'),
-    ('Ms. Falak', 'falak@gdgu.org', '123456', 'faculty'),
-    ('Mr. Ayush Sharma', 'ayush@gdgu.org', '123456', 'faculty');
+  SET FOREIGN_KEY_CHECKS = 0;
+
+  DROP TABLE IF EXISTS trips;
+  DROP TABLE IF EXISTS bookings;
+  DROP TABLE IF EXISTS vehicles;
+  DROP TABLE IF EXISTS users;
+
+  SET FOREIGN_KEY_CHECKS = 1;
+
+  -- USERS TABLE
+  CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin','faculty','driver') NOT NULL
+  );
+
+  -- VEHICLES TABLE
+  CREATE TABLE vehicles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehicle_number VARCHAR(50) NOT NULL,
+    vehicle_type VARCHAR(50),
+    capacity INT,
+    status VARCHAR(50) DEFAULT 'available'
+  );
+
+  -- BOOKINGS TABLE
+  CREATE TABLE bookings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    faculty_id INT NOT NULL,
+    date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    destination VARCHAR(255),
+    purpose TEXT,
+    status VARCHAR(50) DEFAULT 'pending',
+    vehicle_id INT NULL,
+    FOREIGN KEY (faculty_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL
+  );
+
+  -- TRIPS TABLE
+  CREATE TABLE trips (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    start_location VARCHAR(255),
+    end_location VARCHAR(255),
+    start_time DATETIME,
+    end_time DATETIME,
+    status VARCHAR(50) DEFAULT 'scheduled',
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+  );
+
+  -- INSERT USERS
+  INSERT INTO users (name, email, password, role) VALUES
+  ('Admin User', 'admin@gdgu.org', '123456', 'admin'),
+  ('Dr. Meera', 'meera@gdgu.org', '123456', 'faculty'),
+  ('Dr. Ayush', 'ayush@gdgu.org', '123456', 'faculty'),
+  ('Mr. Shashi Lal', 'shashi@gdgu.org', '123456', 'driver');
+
+  -- INSERT VEHICLE
+  INSERT INTO vehicles (vehicle_number, vehicle_type, capacity, status)
+  VALUES ('HR26AB1234', 'Bus', 40, 'available');
+
   `;
 
   connection.query(queries, (err) => {
     if (err) {
       console.error(err);
-      return res.send("Error creating tables");
+      return res.status(500).send("Database setup failed");
     }
-    res.send("Database setup complete!");
+    res.send("✅ Full database setup completed successfully!");
   });
 });
 
 
-app.get("/check-users", (req, res) => {
-  connection.query("SELECT * FROM users", (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.send("Error fetching users");
-    }
-    res.json(results);
-  });
-});
+// app.get("/check-users", (req, res) => {
+//   connection.query("SELECT * FROM users", (err, results) => {
+//     if (err) {
+//       console.error(err);
+//       return res.send("Error fetching users");
+//     }
+//     res.json(results);
+//   });
+// });
 
 const PORT = process.env.PORT || 3000;
 
