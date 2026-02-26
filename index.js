@@ -90,7 +90,7 @@ app.get('/', (req, res) => {
     res.redirect('/login');
 });
 
-app.use('/trips', requireAdmin, tripRoutes);
+
 
 // =======================
 // START SERVER
