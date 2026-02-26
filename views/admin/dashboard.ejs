@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - GDGU Transit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Socket -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+
+<body>
+
+<%- include('../partials/adminNavbar') %>
+
+<div class="container mt-4">
+
+    <!-- STATS CARDS -->
+    <div class="row text-center g-4">
+
+        <div class="col-md-3">
+            <div class="card dashboard-card shadow">
+                <div class="card-body">
+                    <h6>Total Bookings</h6>
+                    <h3><%= stats.total_bookings %></h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card dashboard-card shadow">
+                <div class="card-body">
+                    <h6>Active Users</h6>
+                    <h3 id="activeUsersCount">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card dashboard-card shadow">
+                <div class="card-body">
+                    <h6>Active Trips</h6>
+                    <h3><%= stats.active_trips %></h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card dashboard-card shadow">
+                <div class="card-body">
+                    <h6>Available Buses</h6>
+                    <h3><%= stats.available_buses %></h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LIVE BUS INFO -->
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card shadow p-4">
+                <h5>Live Bus Info</h5>
+                <p><strong>Bus:</strong> HR55AU6896</p>
+                <p><strong>Driver:</strong> Mr. Shashi Lal</p>
+                <p><strong>Status:</strong>
+                    <span id="liveStatus" class="moving">Moving</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card shadow p-4">
+                <h5>Booking Status Overview</h5>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow p-4">
+                <h5>Monthly Booking Trend</h5>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAP -->
+    <div class="row mt-5">
+        <div class="col">
+            <div id="map"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= CHART SCRIPT ================= -->
+<script>
+    const statusData = <%- JSON.stringify(statusData || []) %>;
+    const monthlyData = <%- JSON.stringify(monthlyData || []) %>;
+
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: statusData.map(item => item.status),
+            datasets: [{
+                data: statusData.map(item => item.count),
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    new Chart(document.getElementById('monthlyChart'), {
+        type: 'bar',
+        data: {
+            labels: monthlyData.map(item => item.month),
+            datasets: [{
+                label: 'Bookings',
+                data: monthlyData.map(item => item.count),
+                backgroundColor: '#0d6efd',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
+
+<!-- ================= MAP + SOCKET SCRIPT ================= -->
+<script>
+    const socket = io();
+
+    const map = L.map('map').setView([28.6139, 77.2090], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Create icon with CSS class
+    let busIcon = L.icon({
+        iconUrl: '/images/bus.png',
+        iconSize: [50, 50],
+        iconAnchor: [25, 25],
+        className: 'bus-icon green'
+    });
+
+    let marker = L.marker([28.6139, 77.2090], { icon: busIcon }).addTo(map);
+
+    let routeCoordinates = [];
+    let routeLine = L.polyline(routeCoordinates, {
+        color: 'blue',
+        weight: 5
+    }).addTo(map);
+
+    socket.on('busLocation', (data) => {
+
+        const newPosition = [data.lat, data.lng];
+
+        marker.setLatLng(newPosition);
+        map.panTo(newPosition);
+
+        routeCoordinates.push(newPosition);
+        routeLine.setLatLngs(routeCoordinates);
+
+        const statusEl = document.getElementById("liveStatus");
+
+        if (data.moving) {
+            statusEl.textContent = "Moving";
+
+            // Change icon to green
+            busIcon = L.icon({
+                iconUrl: '/images/bus.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 25],
+                className: 'bus-icon green'
+            });
+
+            routeLine.setStyle({ color: 'green' });
+
+        } else {
+            statusEl.textContent = "Stopped";
+
+            // Change icon to red
+            busIcon = L.icon({
+                iconUrl: '/images/bus.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 25],
+                className: 'bus-icon red'
+            });
+
+            routeLine.setStyle({ color: 'red' });
+        }
+
+        marker.setIcon(busIcon);
+    });
+</script>
+
+</body>
+</html>
