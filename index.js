@@ -47,6 +47,14 @@ trackingSocket(io);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.set('trust proxy', 1);
+
+app.use(session({
+    secret: 'gdguSecretKey',
+    resave: false,
+    saveUninitialized: false
+}));
+
 // Session MUST be before routes
 app.use(session({
     secret: 'gdguSecretKey',
