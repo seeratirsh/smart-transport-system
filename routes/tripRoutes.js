@@ -11,13 +11,11 @@ router.get('/', (req, res) => {
             trips.id,
             bookings.destination,
             bookings.date,
-            users.name AS driver,
             vehicles.vehicle_number,
             trips.status
         FROM trips
         JOIN bookings ON trips.booking_id = bookings.id
-        JOIN users ON trips.driver_id = users.id
-        JOIN vehicles ON trips.vehicle_id = vehicles.id
+        LEFT JOIN vehicles ON trips.vehicle_id = vehicles.id
         ORDER BY trips.id DESC
     `;
 
